@@ -64,13 +64,18 @@ const antenna = new THREE.Mesh(new THREE.CylinderGeometry(.035, .05, 1.6, 10), d
 box([.72, .72, .78], darkMat, [-2.3, .35, 0], .12); box([.72, .72, .78], darkMat, [2.3, .35, 0], .12);
 
 const tapeMeshes = [];
+const makeTapeThumbnail = (number, title, colors) => {
+  const [background, accent] = colors;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360"><rect width="640" height="360" fill="${background}"/><path d="M0 285 170 90l135 135L430 68l210 210v82H0Z" fill="${accent}" opacity=".72"/><circle cx="500" cy="92" r="62" fill="none" stroke="#eae7df" stroke-width="2" opacity=".65"/><circle cx="500" cy="92" r="25" fill="none" stroke="#eae7df" stroke-width="2" opacity=".65"/><path d="M52 55h140M52 75h90" stroke="#eae7df" stroke-width="3" opacity=".7"/><text x="52" y="302" fill="#eae7df" font-family="monospace" font-size="26" letter-spacing="4">TAPE ${String(number).padStart(2, '0')}</text><text x="52" y="332" fill="#eae7df" font-family="monospace" font-size="13" letter-spacing="2" opacity=".8">${title.toUpperCase()}</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+};
 const tapeMedia = [
-  ['Tape 01 / Night Signal', 'Placeholder description for a late-night recording from the first tape box.', 'dQw4w9WgXcQ'],
-  ['Tape 02 / Home Video', 'Placeholder description for a home-video recording from the first tape box.', '3JZ_D3ELwOQ'],
-  ['Tape 03 / Channel Test', 'Placeholder description for a broadcast test recording from the first tape box.', 'M7lc1UVf-VE'],
-  ['Tape 04 / Field Notes', 'Placeholder description for a field recording from the second tape box.', 'aqz-KE-bpKQ'],
-  ['Tape 05 / Sunday Replay', 'Placeholder description for a Sunday replay from the second tape box.', 'Zi_XLOBDo_Y'],
-  ['Tape 06 / Signal Archive', 'Placeholder description for an archived signal recording from the second tape box.', 'ScMzIvxBSi4']
+  ['Tape 01 / Night Signal', 'Placeholder description for a late-night recording from the first tape box.', 'dQw4w9WgXcQ', makeTapeThumbnail(1, 'Night Signal', ['#293b38', '#9a513e'])],
+  ['Tape 02 / Home Video', 'Placeholder description for a home-video recording from the first tape box.', '3JZ_D3ELwOQ', makeTapeThumbnail(2, 'Home Video', ['#28324a', '#6e8f88'])],
+  ['Tape 03 / Channel Test', 'Placeholder description for a broadcast test recording from the first tape box.', 'M7lc1UVf-VE', makeTapeThumbnail(3, 'Channel Test', ['#4a3028', '#c59a57'])],
+  ['Tape 04 / Field Notes', 'Placeholder description for a field recording from the second tape box.', 'aqz-KE-bpKQ', makeTapeThumbnail(4, 'Field Notes', ['#32324d', '#7776a5'])],
+  ['Tape 05 / Sunday Replay', 'Placeholder description for a Sunday replay from the second tape box.', 'Zi_XLOBDo_Y', makeTapeThumbnail(5, 'Sunday Replay', ['#3a3024', '#c48b55'])],
+  ['Tape 06 / Signal Archive', 'Placeholder description for an archived signal recording from the second tape box.', 'ScMzIvxBSi4', makeTapeThumbnail(6, 'Signal Archive', ['#263c32', '#6f9a69'])]
 ];
 const addStorage = (x, colors, start) => {
   const group = new THREE.Group(); group.position.set(x, .25, -1); scene.add(group);
@@ -117,12 +122,18 @@ const grid = new THREE.GridHelper(80, 40, 0x353531, 0x242522); grid.position.y =
 const resize = () => { const r = host.getBoundingClientRect(); camera.aspect = r.width / r.height; camera.updateProjectionMatrix(); renderer.setSize(r.width, r.height, true); }; addEventListener('resize', resize); resize();
 const popup = document.querySelector('#info-popup'), tapePopup = document.querySelector('#tape-popup');
 const videoFrame = document.querySelector('#info-popup iframe');
+const tapeThumbnail = document.querySelector('#tape-thumbnail');
+const tapeTitle = document.querySelector('#tape-title');
+const tapeDescription = document.querySelector('#tape-description');
 let selectedTapeVideoId = null;
 document.querySelector('.popup-close').onclick = () => popup.classList.remove('open'); document.querySelector('.tape-close').onclick = () => tapePopup.classList.remove('open');
 popup.addEventListener('click', event => { if (event.target === popup) popup.classList.remove('open'); });
 tapePopup.addEventListener('click', event => { if (event.target === tapePopup) tapePopup.classList.remove('open'); });
 document.querySelector('#tape-insert').onclick = () => {
-  if (selectedTapeVideoId) videoFrame.src = `https://www.youtube.com/embed/${selectedTapeVideoId}`;
+  if (selectedTapeVideoId) {
+    videoFrame.src = `https://www.youtube.com/embed/${selectedTapeVideoId}?autoplay=1`;
+    popup.classList.add('open');
+  }
   tapePopup.classList.remove('open');
   screenMaterial.emissive.set(0x4b83bd);
   glow.color.set(0x4b83bd);
@@ -133,6 +144,6 @@ const zoom = document.querySelector('#zoom'), zoomValue = document.querySelector
 document.querySelector('#reset').onclick = () => { camera.position.set(...views.front); controls.target.set(0, 2.45, 0); controls.update(); zoom.value = 8.6; zoom.oninput(); document.querySelector('[data-view="front"]').click(); }; zoom.oninput();
 const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2(); let hoveredTape = null; let monitorHovered = false;
 renderer.domElement.addEventListener('pointermove', event => { const r = renderer.domElement.getBoundingClientRect(); pointer.set((event.clientX - r.left) / r.width * 2 - 1, -(event.clientY - r.top) / r.height * 2 + 1); raycaster.setFromCamera(pointer, camera); const tapeHit = raycaster.intersectObjects(tapeMeshes, true)[0]; hoveredTape = tapeHit ? tapeHit.object.parent : null; monitorHovered = raycaster.intersectObject(screen, false).length > 0; screenMaterial.emissiveIntensity = monitorHovered ? .7 : 0; renderer.domElement.style.cursor = hoveredTape || monitorHovered ? 'pointer' : 'grab'; });
-renderer.domElement.addEventListener('click', () => { if (hoveredTape) { const [title, description, videoId] = hoveredTape.userData.media; selectedTapeVideoId = videoId; document.querySelector('#tape-title').textContent = title; document.querySelector('#tape-description').textContent = description; tapePopup.classList.add('open'); } else if (monitorHovered) popup.classList.add('open'); });
+renderer.domElement.addEventListener('click', () => { if (hoveredTape) { const [title, description, videoId, thumbnail] = hoveredTape.userData.media; selectedTapeVideoId = videoId; tapeThumbnail.src = thumbnail; tapeThumbnail.alt = `${title} placeholder preview`; tapeTitle.textContent = title; tapeDescription.textContent = description; tapePopup.classList.add('open'); } else if (monitorHovered) popup.classList.add('open'); });
 addEventListener('keydown', event => { if (event.key === 'Escape') { popup.classList.remove('open'); tapePopup.classList.remove('open'); } });
 function animate() { requestAnimationFrame(animate); controls.update(); tapeMeshes.forEach(tape => { tape.position.y = THREE.MathUtils.lerp(tape.position.y, tape.userData.baseY + (tape === hoveredTape ? .34 : 0), .13); }); renderer.render(scene, camera); } animate();
