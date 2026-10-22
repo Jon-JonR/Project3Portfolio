@@ -116,16 +116,23 @@ const grid = new THREE.GridHelper(80, 40, 0x353531, 0x242522); grid.position.y =
 
 const resize = () => { const r = host.getBoundingClientRect(); camera.aspect = r.width / r.height; camera.updateProjectionMatrix(); renderer.setSize(r.width, r.height, true); }; addEventListener('resize', resize); resize();
 const popup = document.querySelector('#info-popup'), tapePopup = document.querySelector('#tape-popup');
+const videoFrame = document.querySelector('#info-popup iframe');
+let selectedTapeVideoId = null;
 document.querySelector('.popup-close').onclick = () => popup.classList.remove('open'); document.querySelector('.tape-close').onclick = () => tapePopup.classList.remove('open');
 popup.addEventListener('click', event => { if (event.target === popup) popup.classList.remove('open'); });
 tapePopup.addEventListener('click', event => { if (event.target === tapePopup) tapePopup.classList.remove('open'); });
-document.querySelector('#tape-insert').onclick = () => { tapePopup.classList.remove('open'); screenMaterial.emissive.set(0x4b83bd); glow.color.set(0x4b83bd); };
+document.querySelector('#tape-insert').onclick = () => {
+  if (selectedTapeVideoId) videoFrame.src = `https://www.youtube.com/embed/${selectedTapeVideoId}`;
+  tapePopup.classList.remove('open');
+  screenMaterial.emissive.set(0x4b83bd);
+  glow.color.set(0x4b83bd);
+};
 const views = { front: [0, 4.8, -12], side: [10.7, 4.6, .1], back: [-7.5, 4.7, 7.6] };
 document.querySelectorAll('[data-view]').forEach(button => button.onclick = () => { document.querySelectorAll('[data-view]').forEach(item => item.classList.remove('active')); button.classList.add('active'); camera.position.set(...views[button.dataset.view]); controls.target.set(0, 2.45, 0); controls.update(); });
 const zoom = document.querySelector('#zoom'), zoomValue = document.querySelector('#zoom-value'); zoom.oninput = () => { camera.position.setLength(+zoom.value); zoomValue.textContent = `${Math.round((14 - camera.position.length()) / 9 * 100)}%`; };
 document.querySelector('#reset').onclick = () => { camera.position.set(...views.front); controls.target.set(0, 2.45, 0); controls.update(); zoom.value = 8.6; zoom.oninput(); document.querySelector('[data-view="front"]').click(); }; zoom.oninput();
 const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2(); let hoveredTape = null; let monitorHovered = false;
 renderer.domElement.addEventListener('pointermove', event => { const r = renderer.domElement.getBoundingClientRect(); pointer.set((event.clientX - r.left) / r.width * 2 - 1, -(event.clientY - r.top) / r.height * 2 + 1); raycaster.setFromCamera(pointer, camera); const tapeHit = raycaster.intersectObjects(tapeMeshes, true)[0]; hoveredTape = tapeHit ? tapeHit.object.parent : null; monitorHovered = raycaster.intersectObject(screen, false).length > 0; screenMaterial.emissiveIntensity = monitorHovered ? .7 : 0; renderer.domElement.style.cursor = hoveredTape || monitorHovered ? 'pointer' : 'grab'; });
-renderer.domElement.addEventListener('click', () => { if (hoveredTape) { const [title, description] = hoveredTape.userData.media; document.querySelector('#tape-title').textContent = title; document.querySelector('#tape-description').textContent = description; tapePopup.classList.add('open'); } else if (monitorHovered) popup.classList.add('open'); });
+renderer.domElement.addEventListener('click', () => { if (hoveredTape) { const [title, description, videoId] = hoveredTape.userData.media; selectedTapeVideoId = videoId; document.querySelector('#tape-title').textContent = title; document.querySelector('#tape-description').textContent = description; tapePopup.classList.add('open'); } else if (monitorHovered) popup.classList.add('open'); });
 addEventListener('keydown', event => { if (event.key === 'Escape') { popup.classList.remove('open'); tapePopup.classList.remove('open'); } });
 function animate() { requestAnimationFrame(animate); controls.update(); tapeMeshes.forEach(tape => { tape.position.y = THREE.MathUtils.lerp(tape.position.y, tape.userData.baseY + (tape === hoveredTape ? .34 : 0), .13); }); renderer.render(scene, camera); } animate();
