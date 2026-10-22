@@ -49,6 +49,9 @@
     .tape-card { position:relative; width:min(420px,calc(100vw - 48px)); padding:38px 34px 34px; background:#0c0e0d; border:1px solid rgba(234,231,223,.22); box-shadow:0 24px 80px rgba(0,0,0,.5); }
     .tape-card h2 { margin:0 0 12px; color:#eae7df; font-size:24px; font-weight:500; }
     .tape-card p { margin:0; color:#8e8d87; font:12px/1.6 'DM Mono'; }
+    .tape-thumb { display:grid; place-items:center; aspect-ratio:16/9; margin-bottom:20px; border:1px solid rgba(234,231,223,.18); background:linear-gradient(135deg,#293b38,#9a513e 52%,#d0a75b); color:rgba(255,255,255,.78); font:11px 'DM Mono'; letter-spacing:.12em; }
+    .insert-button { margin-top:24px; width:100%; border-color:var(--accent); color:var(--ink); background:rgba(239,107,74,.1); }
+    .insert-button:hover { background:rgba(239,107,74,.22); }
     .tape-close { position:absolute; top:10px; right:10px; width:32px; height:32px; padding:0; border:1px solid rgba(234,231,223,.5); border-radius:50%; background:rgba(12,14,13,.72); color:#eae7df; font:24px/28px Arial,sans-serif; cursor:pointer; }
     .tape-close:hover { color:#ef6b4a; border-color:#ef6b4a; }
     .popup-card { position:relative; width:min(1100px,calc(100vw - 48px)); margin:24px; padding:0; background:#0c0e0d; border:1px solid rgba(234,231,223,.22); box-shadow:0 24px 80px rgba(0,0,0,.5); }
@@ -82,8 +85,10 @@
   <div id="tape-popup" role="dialog" aria-modal="true" aria-label="Video tape information">
     <div class="tape-card">
       <button class="tape-close" type="button" aria-label="Close tape information">×</button>
-      <h2>Video tape</h2>
-      <p>Placeholder text for this tape. More information about the recording will appear here.</p>
+      <div class="tape-thumb">PLACEHOLDER THUMBNAIL</div>
+      <h2 id="tape-title">Video tape</h2>
+      <p id="tape-description">Placeholder text for this tape. More information about the recording will appear here.</p>
+      <button id="tape-insert" class="insert-button" type="button">Insert</button>
     </div>
   </div>
       <div class="controls">
@@ -190,13 +195,21 @@
     storagePart([1.48,.12,.12],storageWood,[0,.31,-.59],.03); storagePart([1.48,.12,.12],storageWood,[0,.31,.59],.03);
     storagePart([.12,.12,1.05],storageWood,[-.67,.31,0],.03); storagePart([.12,.12,1.05],storageWood,[.67,.31,0],.03);
     const tapeMeshes=[];
+    const tapeMedia=[
+      {title:'Tape 01 / Night Signal',description:'Placeholder description for a late-night recording from the first tape box.',url:'https://www.youtube.com/embed/dQw4w9WgXcQ'},
+      {title:'Tape 02 / Home Video',description:'Placeholder description for a home-video recording from the first tape box.',url:'https://www.youtube.com/embed/3JZ_D3ELwOQ'},
+      {title:'Tape 03 / Channel Test',description:'Placeholder description for a broadcast test recording from the first tape box.',url:'https://www.youtube.com/embed/M7lc1UVf-VE'},
+      {title:'Tape 04 / Field Notes',description:'Placeholder description for a field recording from the second tape box.',url:'https://www.youtube.com/embed/aqz-KE-bpKQ'},
+      {title:'Tape 05 / Sunday Replay',description:'Placeholder description for a Sunday replay from the second tape box.',url:'https://www.youtube.com/embed/Zi_XLOBDo_Y'},
+      {title:'Tape 06 / Signal Archive',description:'Placeholder description for an archived signal recording from the second tape box.',url:'https://www.youtube.com/embed/ScMzIvxBSi4'}
+    ];
     [0xc45c45,0x6e8f88,0xc59a57].forEach((color,i)=>{
       const x=-.4+i*.4;
       const tape=storagePart([.4,.82,.62],mat(color,.52),[0,0,0],.035);
       const label=storagePart([.27,.18,.025],mat(0xe3d4b3,.8),[0,.05,-.325],.01);
       tapeStorage.remove(tape); tapeStorage.remove(label);
       const tapeGroup=new THREE.Group(); tapeGroup.position.set(x,.25,0);
-      tapeGroup.userData.baseY=.25; tapeGroup.userData.hovered=false;
+      tapeGroup.userData.baseY=.25; tapeGroup.userData.hovered=false; tapeGroup.userData.media=tapeMedia[i];
       tapeGroup.add(tape,label); tapeStorage.add(tapeGroup); tapeMeshes.push(tapeGroup);
     });
 
@@ -221,7 +234,7 @@
       const label=oldStoragePart([.27,.18,.025],mat(0xe3d4b3,.8),[0,.05,-.325],.01);
       oldTapeStorage.remove(tape); oldTapeStorage.remove(label);
       const tapeGroup=new THREE.Group(); tapeGroup.position.set(x,.25,0);
-      tapeGroup.userData.baseY=.25; tapeGroup.userData.hovered=false;
+      tapeGroup.userData.baseY=.25; tapeGroup.userData.hovered=false; tapeGroup.userData.media=tapeMedia[i+3];
       tapeGroup.add(tape,label); oldTapeStorage.add(tapeGroup); tapeMeshes.push(tapeGroup);
     });
 
@@ -256,8 +269,15 @@
     const popupClose = document.querySelector('.popup-close');
     const tapePopup = document.querySelector('#tape-popup');
     const tapePopupClose = document.querySelector('.tape-close');
+    const tapeTitle = document.querySelector('#tape-title');
+    const tapeDescription = document.querySelector('#tape-description');
+    const tapeInsert = document.querySelector('#tape-insert');
+    const videoFrame = document.querySelector('.video-frame iframe');
     let monitorHovered = false;
     let hoveredTape = null;
+    let selectedTape = null;
+    let pendingVideoUrl = null;
+    let screenReady = false;
     function monitorIsFacingCamera() {
       screen.getWorldPosition(screenWorldPosition);
       screen.getWorldQuaternion(screenWorldQuaternion);
@@ -278,18 +298,39 @@
         hoveredTape=nextTape;
         if(hoveredTape) hoveredTape.userData.hovered=true;
       }
-      screenMaterial.emissiveIntensity=monitorHovered?.7:0;
-      glow.intensity=monitorHovered?3.2:1.5;
+      screenMaterial.emissiveIntensity=monitorHovered?.7:(screenReady?.16:0);
+      glow.intensity=monitorHovered?3.2:(screenReady?2.1:1.5);
       renderer.domElement.style.cursor=monitorHovered||hoveredTape?'pointer':'grab';
     }
     renderer.domElement.addEventListener('pointermove',updateMonitorHit);
-    renderer.domElement.addEventListener('pointerleave',()=>{monitorHovered=false;if(hoveredTape) hoveredTape.userData.hovered=false;hoveredTape=null;screenMaterial.emissiveIntensity=0;glow.intensity=1.5;renderer.domElement.style.cursor='grab';});
+    renderer.domElement.addEventListener('pointerleave',()=>{monitorHovered=false;if(hoveredTape) hoveredTape.userData.hovered=false;hoveredTape=null;screenMaterial.emissiveIntensity=screenReady?.16:0;glow.intensity=screenReady?2.1:1.5;renderer.domElement.style.cursor='grab';});
     renderer.domElement.addEventListener('click',()=>{
-      if(hoveredTape) tapePopup.classList.add('open');
-      else if(monitorHovered) popup.classList.add('open');
+      if(hoveredTape) {
+        selectedTape=hoveredTape;
+        tapeTitle.textContent=selectedTape.userData.media.title;
+        tapeDescription.textContent=selectedTape.userData.media.description;
+        tapePopup.classList.add('open');
+      } else if(monitorHovered) {
+        if(pendingVideoUrl) {
+          videoFrame.src=pendingVideoUrl;
+          pendingVideoUrl=null;
+          screenReady=false;
+          screenMaterial.emissiveIntensity=.7;
+          glow.intensity=3.2;
+        }
+        popup.classList.add('open');
+      }
     });
     popupClose.addEventListener('click',()=>popup.classList.remove('open'));
     tapePopupClose.addEventListener('click',()=>tapePopup.classList.remove('open'));
+    tapeInsert.addEventListener('click',()=>{
+      if(!selectedTape) return;
+      pendingVideoUrl=selectedTape.userData.media.url;
+      screenReady=true;
+      screenMaterial.emissive.set(0x4b83bd);
+      glow.color.set(0x4b83bd);
+      tapePopup.classList.remove('open');
+    });
     popup.addEventListener('click',(event)=>{if(event.target===popup) popup.classList.remove('open');});
     tapePopup.addEventListener('click',(event)=>{if(event.target===tapePopup) tapePopup.classList.remove('open');});
     addEventListener('keydown',(event)=>{if(event.key==='Escape'){popup.classList.remove('open');tapePopup.classList.remove('open');}});
