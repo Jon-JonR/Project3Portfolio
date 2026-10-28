@@ -1,12 +1,17 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const host = document.querySelector('#viewport');
+const tutorialOverlay = document.querySelector('#tutorial-overlay');
+const dismissTutorial = () => tutorialOverlay.classList.add('dismissed');
+document.querySelector('#tutorial-close').onclick = dismissTutorial;
+document.querySelector('#tutorial-dismiss').onclick = dismissTutorial;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x151615);
 const camera = new THREE.PerspectiveCamera(32, 1, .1, 100);
-camera.position.set(0, 4.8, -12);
+camera.position.set(0, 5.4, -18);
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
@@ -16,7 +21,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.15;
 host.appendChild(renderer.domElement);
 
-const compositionTarget = new THREE.Vector3(0, 2.7, 0);
+const compositionTarget = new THREE.Vector3(0, 2.15, 0);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.copy(compositionTarget);
 controls.enableDamping = true;
@@ -27,6 +32,7 @@ controls.maxPolarAngle = Math.PI * .48;
 controls.minPolarAngle = .22;
 controls.enableRotate = false;
 controls.enablePan = true;
+controls.enableZoom = false;
 controls.screenSpacePanning = true;
 const panBounds = { minX: -6.8, maxX: 6.8, minY: .4, maxY: 4.8, minZ: -2.8, maxZ: 2.8 };
 controls.addEventListener('change', () => {
@@ -66,12 +72,12 @@ box([.72, .72, .78], darkMat, [-2.3, .35, 0], .12); box([.72, .72, .78], darkMat
 const tapeMeshes = [];
 // Replace each image path below with your own image file when ready.
 const tapeMedia = [
-  ['Tape 01 / Night Signal', 'Placeholder description for a late-night recording from the first tape box.', 'dQw4w9WgXcQ', 'images/tape-01-placeholder.svg'],
-  ['Tape 02 / Home Video', 'Placeholder description for a home-video recording from the first tape box.', 'c91OeMWzF8U', 'images/Allusions_Fighting_GameSS.jpg'],
-  ['Tape 03 / Channel Test', 'Placeholder description for a broadcast test recording from the first tape box.', 'M7lc1UVf-VE', 'images/tape-03-placeholder.svg'],
-  ['Tape 04 / Field Notes', 'Placeholder description for a field recording from the second tape box.', 'D2wZtfYZCso', 'images/I_Love_MyselfSS.png'],
-  ['Tape 05 / Sunday Replay', 'Placeholder description for a Sunday replay from the second tape box.', '84bD9vlh-ss', 'images/Cycles_SS.png'],
-  ['Tape 06 / Signal Archive', 'Placeholder description for an archived signal recording from the second tape box.', 'ScMzIvxBSi4', 'images/tape-06-placeholder.svg']
+  ['ArroWorra Video Game', 'Provided is the video game, "Arro W orra." The video game identifies as a top down shooter that utilizes the necessary mechanics. As of December 2025, the game has been finished, and no further decisions have been made to further polish or upgrade the game. This project was a collaborative project that includes 2 programmers and myself as the only artist, creating all of the assets and visuals for the game.', null, 'images/better_thumbnail.png', 'https://itch.io/embed/3980542'],
+  ['Allusions Fighting Game', 'A visual combination of many video games alike, specifically the genre of fighting games. Alongside many references to media and video games, the video uses creative techniques to incorporate these allusions into a fighting game. The unique movement is meant to accurately replicate player movement as seen in a fighting game, thus giving the scene an authentic feeling.', 'c91OeMWzF8U', 'images/Allusions_Fighting_GameSS.jpg'],
+  ['Press the Button Video Game', 'Being my first 3D video game project, this video game showcased my ability to create a 3D environment for a video game, mimicking the kind of trapped feeling inside of an asylum. The game consists of repeating a straight room with a new obstacle with every new level.', null, 'images/Press_the_Button_Thumbnail.png', 'https://itch.io/embed/4825287'],
+  ['I Love Myself Music Lyric Video', 'Inspired by Kanye Wests All of the Lights, music video produced in 2011, this music video follows with the song, I by Kendrick Lamar which tackles on the idea of loving yourself during a time where suicide takes a toll on peoples lives young or old, black or white. Visual lyrics, accompanied by flashing letters, gives a kind of feeling that despite being somewhat painful to see, gives off a feeling of being alive, similar to the kind of feeling one would get in a concert.', 'D2wZtfYZCso', 'images/I_Love_MyselfSS.png'],
+  ['Cycles: A Short Film', 'A story unfolded about the narration of one seeing his past self. It interprets the idea that we often go through the same cycles every day without realizing it because it has become so engrained into our everyday lives. This short film narrates the fictional experience of when one sees the cycles hes gone through constantly and eventually develops his own realization, and whether to make a change in his cycles.', '84bD9vlh-ss', 'images/Cycles_SS.png'],
+  ['Katana Blender Project', 'Serves as my first personal 3D Asset Creation in Blender. This piece was made to introduce myself to 3D creation, which was purely created in my free time. Because the piece is a beginning project, Ive decided not to delve deep into the complex parts of Blender, and more on the 3D basic building blocks.', null, 'images/Katana_Introduction_Project.png', null, 'models/Katana.glb']
 ];
 const addStorage = (x, colors, start) => {
   const group = new THREE.Group(); group.position.set(x, .25, -1); scene.add(group);
@@ -118,17 +124,96 @@ const grid = new THREE.GridHelper(80, 40, 0x353531, 0x242522); grid.position.y =
 const resize = () => { const r = host.getBoundingClientRect(); camera.aspect = r.width / r.height; camera.updateProjectionMatrix(); renderer.setSize(r.width, r.height, true); }; addEventListener('resize', resize); resize();
 const popup = document.querySelector('#info-popup'), tapePopup = document.querySelector('#tape-popup');
 const videoFrame = document.querySelector('#info-popup iframe');
+const videoFrameContainer = document.querySelector('.video-frame');
+const modelViewer = document.querySelector('#model-viewer');
 const tapeThumbnail = document.querySelector('#tape-thumbnail');
 const tapeTitle = document.querySelector('#tape-title');
 const tapeDescription = document.querySelector('#tape-description');
 let selectedTapeVideoId = null;
+let selectedTapeEmbedUrl = null;
+let selectedTapeModelUrl = null;
 let insertedVideoReady = false;
+let modelLoadedUrl = null;
+let modelScene = null;
+let modelCamera = null;
+let modelRenderer = null;
+let modelControls = null;
+const modelLoader = new GLTFLoader();
+const setupModelViewer = () => {
+  if (modelRenderer) return;
+  modelScene = new THREE.Scene();
+  modelScene.background = new THREE.Color(0x151615);
+  modelCamera = new THREE.PerspectiveCamera(35, 1, .01, 100);
+  modelCamera.position.set(2.8, 1.8, 3.8);
+  modelRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  modelRenderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  modelRenderer.outputColorSpace = THREE.SRGBColorSpace;
+  modelRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+  modelRenderer.toneMappingExposure = 1.15;
+  modelViewer.appendChild(modelRenderer.domElement);
+  modelControls = new OrbitControls(modelCamera, modelRenderer.domElement);
+  modelControls.enableDamping = true;
+  modelControls.minDistance = .5;
+  modelControls.maxDistance = 20;
+  modelScene.add(new THREE.HemisphereLight(0xd8e0e0, 0x181918, 2.2));
+  const modelKey = new THREE.DirectionalLight(0xffe3c8, 3.2);
+  modelKey.position.set(3, 5, 4);
+  modelScene.add(modelKey);
+  const renderModel = () => {
+    requestAnimationFrame(renderModel);
+    modelControls.update();
+    modelRenderer.render(modelScene, modelCamera);
+  };
+  renderModel();
+};
+const resizeModelViewer = () => {
+  if (!modelRenderer) return;
+  const r = modelViewer.getBoundingClientRect();
+  modelCamera.aspect = r.width / r.height;
+  modelCamera.updateProjectionMatrix();
+  modelRenderer.setSize(r.width, r.height, true);
+};
+const loadModel = url => {
+  setupModelViewer();
+  resizeModelViewer();
+  if (modelLoadedUrl === url) return;
+  modelLoadedUrl = url;
+  modelLoader.load(url, gltf => {
+    if (modelScene && modelScene.userData.loadedModel) modelScene.remove(modelScene.userData.loadedModel);
+    const model = gltf.scene;
+    const bounds = new THREE.Box3().setFromObject(model);
+    const center = bounds.getCenter(new THREE.Vector3());
+    const size = bounds.getSize(new THREE.Vector3());
+    const scale = 2.4 / Math.max(size.x, size.y, size.z);
+    model.scale.setScalar(scale);
+    model.position.sub(center.multiplyScalar(scale));
+    modelScene.add(model);
+    modelScene.userData.loadedModel = model;
+    modelControls.target.set(0, size.y * scale * .35, 0);
+    modelControls.update();
+  }, undefined, error => console.error('Unable to load Tape 06 model.', error));
+};
+const setVideoSource = (url, isItchWidget = false) => {
+  modelViewer.hidden = true;
+  videoFrame.hidden = false;
+  videoFrame.src = url;
+  videoFrameContainer.classList.toggle('itch-widget', isItchWidget);
+};
+const setModelSource = url => {
+  videoFrame.hidden = true;
+  modelViewer.hidden = false;
+  videoFrameContainer.classList.remove('itch-widget');
+  loadModel(url);
+};
 document.querySelector('.popup-close').onclick = () => popup.classList.remove('open'); document.querySelector('.tape-close').onclick = () => tapePopup.classList.remove('open');
 popup.addEventListener('click', event => { if (event.target === popup) popup.classList.remove('open'); });
 tapePopup.addEventListener('click', event => { if (event.target === tapePopup) tapePopup.classList.remove('open'); });
 document.querySelector('#tape-insert').onclick = () => {
-  if (selectedTapeVideoId) {
-    videoFrame.src = `https://www.youtube.com/embed/${selectedTapeVideoId}`;
+  if (selectedTapeEmbedUrl || selectedTapeVideoId) {
+    setVideoSource(selectedTapeEmbedUrl || `https://www.youtube.com/embed/${selectedTapeVideoId}`, Boolean(selectedTapeEmbedUrl));
+    insertedVideoReady = true;
+  } else if (selectedTapeModelUrl) {
+    setModelSource(selectedTapeModelUrl);
     insertedVideoReady = true;
   }
   tapePopup.classList.remove('open');
@@ -137,12 +222,13 @@ document.querySelector('#tape-insert').onclick = () => {
   glow.color.set(0x4b83bd);
   glow.intensity = .65;
 };
-const views = { front: [0, 4.8, -12], side: [10.7, 4.6, .1], back: [-7.5, 4.7, 7.6] };
-document.querySelectorAll('[data-view]').forEach(button => button.onclick = () => { document.querySelectorAll('[data-view]').forEach(item => item.classList.remove('active')); button.classList.add('active'); camera.position.set(...views[button.dataset.view]); controls.target.set(0, 2.45, 0); controls.update(); });
-const zoom = document.querySelector('#zoom'), zoomValue = document.querySelector('#zoom-value'); zoom.oninput = () => { camera.position.setLength(+zoom.value); zoomValue.textContent = `${Math.round((14 - camera.position.length()) / 9 * 100)}%`; };
-document.querySelector('#reset').onclick = () => { camera.position.set(...views.front); controls.target.set(0, 2.45, 0); controls.update(); zoom.value = 8.6; zoom.oninput(); document.querySelector('[data-view="front"]').click(); }; zoom.oninput();
+const views = { front: [0, 5.4, -18], side: [10.7, 4.6, .1], back: [-7.5, 4.7, 7.6] };
+document.querySelectorAll('[data-view]').forEach(button => button.onclick = () => { document.querySelectorAll('[data-view]').forEach(item => item.classList.remove('active')); button.classList.add('active'); camera.position.set(...views[button.dataset.view]); controls.target.set(0, button.dataset.view === 'front' ? 2.15 : 2.45, 0); controls.update(); });
+const zoom = document.querySelector('#zoom'), zoomValue = document.querySelector('#zoom-value'); zoom.oninput = () => { camera.position.setLength(+zoom.value); zoomValue.textContent = `${Math.round((20 - camera.position.length()) / 15 * 100)}%`; };
+document.querySelector('#reset').onclick = () => { camera.position.set(...views.front); controls.target.set(0, 2.15, 0); controls.update(); zoom.value = 18; zoom.oninput(); document.querySelector('[data-view="front"]').click(); }; zoom.oninput();
 const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2(); let hoveredTape = null; let monitorHovered = false;
 renderer.domElement.addEventListener('pointermove', event => { const r = renderer.domElement.getBoundingClientRect(); pointer.set((event.clientX - r.left) / r.width * 2 - 1, -(event.clientY - r.top) / r.height * 2 + 1); raycaster.setFromCamera(pointer, camera); const tapeHit = raycaster.intersectObjects(tapeMeshes, true)[0]; hoveredTape = tapeHit ? tapeHit.object.parent : null; monitorHovered = raycaster.intersectObject(screen, false).length > 0; screenMaterial.emissiveIntensity = monitorHovered ? .7 : insertedVideoReady ? .28 : 0; renderer.domElement.style.cursor = hoveredTape || (monitorHovered && insertedVideoReady) ? 'pointer' : 'grab'; });
-renderer.domElement.addEventListener('click', () => { if (hoveredTape) { const [title, description, videoId, thumbnail] = hoveredTape.userData.media; selectedTapeVideoId = videoId; tapeThumbnail.src = thumbnail; tapeThumbnail.alt = `${title} placeholder preview`; tapeTitle.textContent = title; tapeDescription.textContent = description; tapePopup.classList.add('open'); } else if (monitorHovered && insertedVideoReady) { videoFrame.src = `https://www.youtube.com/embed/${selectedTapeVideoId}?autoplay=1`; popup.classList.add('open'); } });
+renderer.domElement.addEventListener('click', () => { if (hoveredTape) { const [title, description, videoId, thumbnail, embedUrl, modelUrl] = hoveredTape.userData.media; selectedTapeVideoId = videoId; selectedTapeEmbedUrl = embedUrl; selectedTapeModelUrl = modelUrl; tapeThumbnail.src = thumbnail; tapeThumbnail.alt = `${title} placeholder preview`; tapeTitle.textContent = title; tapeDescription.textContent = description; tapePopup.classList.add('open'); } else if (monitorHovered && insertedVideoReady) { if (selectedTapeModelUrl) setModelSource(selectedTapeModelUrl); else setVideoSource(selectedTapeEmbedUrl || `https://www.youtube.com/embed/${selectedTapeVideoId}?autoplay=1`, Boolean(selectedTapeEmbedUrl)); popup.classList.add('open'); resizeModelViewer(); } });
+addEventListener('resize', resizeModelViewer);
 addEventListener('keydown', event => { if (event.key === 'Escape') { popup.classList.remove('open'); tapePopup.classList.remove('open'); } });
 function animate() { requestAnimationFrame(animate); controls.update(); tapeMeshes.forEach(tape => { tape.position.y = THREE.MathUtils.lerp(tape.position.y, tape.userData.baseY + (tape === hoveredTape ? .34 : 0), .13); }); renderer.render(scene, camera); } animate();
