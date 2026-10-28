@@ -67,10 +67,10 @@ const tapeMeshes = [];
 // Replace each image path below with your own image file when ready.
 const tapeMedia = [
   ['Tape 01 / Night Signal', 'Placeholder description for a late-night recording from the first tape box.', 'dQw4w9WgXcQ', 'images/tape-01-placeholder.svg'],
-  ['Tape 02 / Home Video', 'Placeholder description for a home-video recording from the first tape box.', 'c91OeMWzF8U', 'images/tape-02-placeholder.svg'],
+  ['Tape 02 / Home Video', 'Placeholder description for a home-video recording from the first tape box.', 'c91OeMWzF8U', 'images/Allusions_Fighting_GameSS.jpg'],
   ['Tape 03 / Channel Test', 'Placeholder description for a broadcast test recording from the first tape box.', 'M7lc1UVf-VE', 'images/tape-03-placeholder.svg'],
-  ['Tape 04 / Field Notes', 'Placeholder description for a field recording from the second tape box.', 'aqz-KE-bpKQ', 'images/tape-04-placeholder.svg'],
-  ['Tape 05 / Sunday Replay', 'Placeholder description for a Sunday replay from the second tape box.', 'Zi_XLOBDo_Y', 'images/tape-05-placeholder.svg'],
+  ['Tape 04 / Field Notes', 'Placeholder description for a field recording from the second tape box.', 'D2wZtfYZCso', 'images/I_Love_MyselfSS.png'],
+  ['Tape 05 / Sunday Replay', 'Placeholder description for a Sunday replay from the second tape box.', '84bD9vlh-ss', 'images/Cycles_SS.png'],
   ['Tape 06 / Signal Archive', 'Placeholder description for an archived signal recording from the second tape box.', 'ScMzIvxBSi4', 'images/tape-06-placeholder.svg']
 ];
 const addStorage = (x, colors, start) => {
