@@ -48,11 +48,18 @@ header, aside, .controls, .hint, footer { display:none; }
 .tutorial-tapes { left:7vw; bottom:12vh; }
 .tutorial-screen { right:7vw; top:23vh; }
 .tutorial-camera { left:50%; bottom:8vh; transform:translateX(-50%); }
+.tutorial-notepad { left:7vw; top:24vh; }
 #tutorial-overlay.dismissed { animation:tutorial-dismiss 450ms ease forwards; pointer-events:none; }
 @keyframes tutorial-dismiss { to { opacity:0; visibility:hidden; } }
-#info-popup, #tape-popup { position:fixed; inset:0; z-index:20; display:none; place-items:center; padding:24px; background:rgba(7,9,8,.54); backdrop-filter:blur(8px); }
+#info-popup, #tape-popup, #notepad-popup { position:fixed; inset:0; z-index:20; display:none; place-items:center; padding:24px; background:rgba(7,9,8,.54); backdrop-filter:blur(8px); }
 #tape-popup { z-index:21; }
-#info-popup.open, #tape-popup.open { display:grid; }
+#notepad-popup { z-index:22; }
+#info-popup.open, #tape-popup.open, #notepad-popup.open { display:grid; }
+.notepad-card { position:relative; width:min(860px,calc(100vw - 48px)); min-height:min(520px,calc(100vh - 96px)); padding:72px 76px; display:flex; flex-direction:column; justify-content:center; background:#0c0e0d; border:1px solid rgba(234,231,223,.3); box-shadow:0 24px 90px rgba(0,0,0,.62); }
+.notepad-card h2 { margin:0 0 22px; color:#eae7df; font-size:clamp(34px,5vw,64px); line-height:1; font-weight:500; }
+.notepad-card p:not(.eyebrow) { max-width:680px; margin:0; color:#b7b5ad; font:15px/1.7 'DM Mono',monospace; }
+.notepad-close { position:absolute; top:18px; right:18px; width:40px; height:40px; padding:0; border:1px solid rgba(234,231,223,.5); border-radius:50%; background:rgba(12,14,13,.72); color:#eae7df; font:28px/34px Arial,sans-serif; cursor:pointer; }
+.notepad-close:hover { color:#ef6b4a; border-color:#ef6b4a; }
 .tape-card { position:relative; width:min(420px,calc(100vw - 48px)); padding:38px 34px 34px; background:#0c0e0d; border:1px solid rgba(234,231,223,.22); box-shadow:0 24px 80px rgba(0,0,0,.5); }
 .tape-card h2 { margin:0 0 12px; color:#eae7df; font-size:24px; font-weight:500; }
 .tape-card p { margin:0; color:#8e8d87; font:12px/1.6 'DM Mono'; }

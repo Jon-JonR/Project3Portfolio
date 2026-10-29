@@ -89,6 +89,15 @@ roomPart([.28, windowHeight + .28, .28], roomTrimMat, [-9.85, (windowTop + windo
 roomPart([.28, windowHeight + .28, .28], roomTrimMat, [9.85, (windowTop + windowBottom) / 2, windowFrameZ], .04);
 roomPart([.2, windowHeight, .2], roomTrimMat, [0, (windowTop + windowBottom) / 2, windowFrameZ - .04], .03);
 roomPart([19.4, .2, .2], roomTrimMat, [0, (windowTop + windowBottom) / 2, windowFrameZ - .04], .03);
+const notepad = new THREE.Group(); notepad.position.set(0, .02, -3.05); scene.add(notepad);
+const notepadCoverMat = mat(0x6f5142, .62);
+notepadCoverMat.emissive = new THREE.Color(0x000000);
+notepadCoverMat.emissiveIntensity = .55;
+const notepadPageMat = mat(0xe6dbc1, .82);
+const notepadBase = box([3.25, .12, 2.18], notepadCoverMat, [0, 0, 0], .1, notepad);
+box([3.02, .08, 2.02], notepadPageMat, [0, .09, 0], .06, notepad);
+box([.16, .12, 2.02], notepadCoverMat, [-1.43, .14, 0], .04, notepad);
+for (let i = 0; i < 5; i++) box([2.35, .018, .025], mat(0xb7aa91, .9), [.15, .14, -.62 + i * .3], .01, notepad);
 box([6.8, 4.25, 3.15], bodyMat, [0, 2.78, 0], .32);
 box([5.32, 3.35, .22], darkMat, [-.62, 3.06, -1.64], .22);
 const screenMaterial = mat(0x172522, .3); screenMaterial.emissive = new THREE.Color(0x4cae9d);
@@ -156,7 +165,7 @@ const floor = new THREE.Mesh(new THREE.PlaneGeometry(39.7, 29.7), mat(0x101110, 
 const grid = new THREE.GridHelper(40, 40, 0x353531, 0x242522); grid.position.set(0, -5.69, 1); grid.scale.z = .75; grid.material.opacity = .24; grid.material.transparent = true; scene.add(grid);
 
 const resize = () => { const r = host.getBoundingClientRect(); camera.aspect = r.width / r.height; camera.updateProjectionMatrix(); renderer.setSize(r.width, r.height, true); }; addEventListener('resize', resize); resize();
-const popup = document.querySelector('#info-popup'), tapePopup = document.querySelector('#tape-popup');
+const popup = document.querySelector('#info-popup'), tapePopup = document.querySelector('#tape-popup'), notepadPopup = document.querySelector('#notepad-popup');
 const videoFrame = document.querySelector('#info-popup iframe');
 const videoFrameContainer = document.querySelector('.video-frame');
 const modelViewer = document.querySelector('#model-viewer');
@@ -239,7 +248,7 @@ const setModelSource = url => {
   videoFrameContainer.classList.remove('itch-widget');
   loadModel(url);
 };
-document.querySelector('.popup-close').onclick = () => popup.classList.remove('open'); document.querySelector('.tape-close').onclick = () => tapePopup.classList.remove('open');
+document.querySelector('.popup-close').onclick = () => popup.classList.remove('open'); document.querySelector('.tape-close').onclick = () => tapePopup.classList.remove('open'); document.querySelector('.notepad-close').onclick = () => notepadPopup.classList.remove('open');
 popup.addEventListener('click', event => { if (event.target === popup) popup.classList.remove('open'); });
 tapePopup.addEventListener('click', event => { if (event.target === tapePopup) tapePopup.classList.remove('open'); });
 document.querySelector('#tape-insert').onclick = () => {
@@ -260,9 +269,9 @@ const views = { front: [0, 5.4, -18], side: [10.7, 4.6, .1], back: [-7.5, 4.7, 7
 document.querySelectorAll('[data-view]').forEach(button => button.onclick = () => { document.querySelectorAll('[data-view]').forEach(item => item.classList.remove('active')); button.classList.add('active'); camera.position.set(...views[button.dataset.view]); controls.target.set(0, button.dataset.view === 'front' ? 2.15 : 2.45, 0); controls.update(); });
 const zoom = document.querySelector('#zoom'), zoomValue = document.querySelector('#zoom-value'); zoom.oninput = () => { camera.position.setLength(+zoom.value); zoomValue.textContent = `${Math.round((20 - camera.position.length()) / 15 * 100)}%`; };
 document.querySelector('#reset').onclick = () => { camera.position.set(...views.front); controls.target.set(0, 2.15, 0); controls.update(); zoom.value = 18; zoom.oninput(); document.querySelector('[data-view="front"]').click(); }; zoom.oninput();
-const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2(); let hoveredTape = null; let monitorHovered = false;
-renderer.domElement.addEventListener('pointermove', event => { const r = renderer.domElement.getBoundingClientRect(); pointer.set((event.clientX - r.left) / r.width * 2 - 1, -(event.clientY - r.top) / r.height * 2 + 1); raycaster.setFromCamera(pointer, camera); const tapeHit = raycaster.intersectObjects(tapeMeshes, true)[0]; hoveredTape = tapeHit ? tapeHit.object.parent : null; monitorHovered = raycaster.intersectObject(screen, false).length > 0; screenMaterial.emissiveIntensity = monitorHovered ? .7 : insertedVideoReady ? .28 : 0; renderer.domElement.style.cursor = hoveredTape || (monitorHovered && insertedVideoReady) ? 'pointer' : 'grab'; });
-renderer.domElement.addEventListener('click', () => { if (hoveredTape) { const [title, description, videoId, thumbnail, embedUrl, modelUrl] = hoveredTape.userData.media; selectedTapeVideoId = videoId; selectedTapeEmbedUrl = embedUrl; selectedTapeModelUrl = modelUrl; tapeThumbnail.src = thumbnail; tapeThumbnail.alt = `${title} placeholder preview`; tapeTitle.textContent = title; tapeDescription.textContent = description; tapePopup.classList.add('open'); } else if (monitorHovered && insertedVideoReady) { if (selectedTapeModelUrl) setModelSource(selectedTapeModelUrl); else setVideoSource(selectedTapeEmbedUrl || `https://www.youtube.com/embed/${selectedTapeVideoId}?autoplay=1`, Boolean(selectedTapeEmbedUrl)); popup.classList.add('open'); resizeModelViewer(); } });
+const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2(); let hoveredTape = null; let monitorHovered = false; let notepadHovered = false;
+renderer.domElement.addEventListener('pointermove', event => { const r = renderer.domElement.getBoundingClientRect(); pointer.set((event.clientX - r.left) / r.width * 2 - 1, -(event.clientY - r.top) / r.height * 2 + 1); raycaster.setFromCamera(pointer, camera); const tapeHit = raycaster.intersectObjects(tapeMeshes, true)[0]; hoveredTape = tapeHit ? tapeHit.object.parent : null; monitorHovered = raycaster.intersectObject(screen, false).length > 0; notepadHovered = raycaster.intersectObject(notepad, true).length > 0; notepadCoverMat.emissive.set(notepadHovered ? 0x8f3826 : 0x000000); screenMaterial.emissiveIntensity = monitorHovered ? .7 : insertedVideoReady ? .28 : 0; renderer.domElement.style.cursor = hoveredTape || notepadHovered || (monitorHovered && insertedVideoReady) ? 'pointer' : 'grab'; });
+renderer.domElement.addEventListener('click', () => { if (hoveredTape) { const [title, description, videoId, thumbnail, embedUrl, modelUrl] = hoveredTape.userData.media; selectedTapeVideoId = videoId; selectedTapeEmbedUrl = embedUrl; selectedTapeModelUrl = modelUrl; tapeThumbnail.src = thumbnail; tapeThumbnail.alt = `${title} placeholder preview`; tapeTitle.textContent = title; tapeDescription.textContent = description; tapePopup.classList.add('open'); } else if (notepadHovered) { notepadPopup.classList.add('open'); } else if (monitorHovered && insertedVideoReady) { if (selectedTapeModelUrl) setModelSource(selectedTapeModelUrl); else setVideoSource(selectedTapeEmbedUrl || `https://www.youtube.com/embed/${selectedTapeVideoId}?autoplay=1`, Boolean(selectedTapeEmbedUrl)); popup.classList.add('open'); resizeModelViewer(); } });
 addEventListener('resize', resizeModelViewer);
-addEventListener('keydown', event => { if (event.key === 'Escape') { popup.classList.remove('open'); tapePopup.classList.remove('open'); } });
+addEventListener('keydown', event => { if (event.key === 'Escape') { popup.classList.remove('open'); tapePopup.classList.remove('open'); notepadPopup.classList.remove('open'); } });
 function animate() { requestAnimationFrame(animate); controls.update(); tapeMeshes.forEach(tape => { tape.position.y = THREE.MathUtils.lerp(tape.position.y, tape.userData.baseY + (tape === hoveredTape ? .34 : 0), .13); }); renderer.render(scene, camera); } animate();
