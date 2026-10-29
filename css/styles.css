@@ -36,17 +36,18 @@ header, aside, .controls, .hint, footer { display:none; }
 #tutorial-overlay { position:fixed; inset:0; z-index:15; color:#eae7df; background:rgba(7,9,8,.18); pointer-events:none; }
 .tutorial-arrows { position:absolute; inset:0; width:100%; height:100%; color:var(--accent); opacity:.9; pointer-events:none; }
 .tutorial-arrows path { fill:none; stroke:currentColor; stroke-width:2.5; stroke-dasharray:8 7; filter:drop-shadow(0 2px 4px rgba(0,0,0,.55)); }
-.tutorial-card { position:absolute; top:7vh; left:50%; width:min(380px,calc(100vw - 48px)); transform:translateX(-50%); padding:24px 28px 22px; background:rgba(12,14,13,.82); border:1px solid rgba(234,231,223,.3); box-shadow:0 18px 50px rgba(0,0,0,.28); text-align:center; pointer-events:auto; }
-.tutorial-card h2 { margin:0 0 10px; font-size:25px; font-weight:500; }
-.tutorial-card p:not(.eyebrow) { margin:8px 0; color:#b7b5ad; font:12px/1.55 'DM Mono',monospace; }
+.tutorial-card { position:absolute; top:6vh; left:50%; width:min(480px,calc(100vw - 40px)); transform:translateX(-50%); padding:32px 38px 30px; background:rgba(8,10,9,.94); border:1px solid rgba(234,231,223,.55); box-shadow:0 22px 70px rgba(0,0,0,.6), 0 0 0 1px rgba(239,107,74,.12); text-align:center; pointer-events:auto; }
+.tutorial-card h2 { margin:0 0 14px; font-size:clamp(27px,3vw,34px); line-height:1.08; font-weight:500; }
+.tutorial-card p:not(.eyebrow) { margin:11px 0; color:#dedbd1; font:14px/1.6 'DM Mono',monospace; }
 .tutorial-card em { color:#eae7df; font-style:normal; }
 .tutorial-card .eyebrow { margin:0 0 8px; }
 #tutorial-close { position:absolute; top:8px; right:10px; border:0; background:none; color:#eae7df; font-size:24px; cursor:pointer; }
 #tutorial-dismiss { margin-top:12px; border-color:var(--accent); color:var(--ink); background:rgba(239,107,74,.12); cursor:pointer; }
-.tutorial-step { position:absolute; display:flex; align-items:center; gap:10px; color:#eae7df; font:12px/1.35 'DM Mono',monospace; text-shadow:0 2px 5px #080908; }
-.tutorial-step strong { display:grid; place-items:center; width:28px; height:28px; border:1px solid var(--accent); border-radius:50%; color:var(--accent); font:14px 'DM Mono',monospace; }
+.tutorial-step { position:absolute; display:flex; align-items:center; gap:12px; padding:12px 15px 12px 12px; color:#fffdf5; background:rgba(8,10,9,.86); border:1px solid rgba(234,231,223,.42); box-shadow:0 8px 24px rgba(0,0,0,.45); font:14px/1.4 'DM Mono',monospace; text-shadow:0 2px 5px #080908; }
+.tutorial-step strong { display:grid; place-items:center; flex:0 0 34px; width:34px; height:34px; border:2px solid var(--accent); border-radius:50%; color:#fffdf5; background:rgba(239,107,74,.18); font:16px 'DM Mono',monospace; }
 .tutorial-tapes { left:7vw; bottom:12vh; }
 .tutorial-screen { right:7vw; top:23vh; }
+.tutorial-camera { left:50%; bottom:8vh; transform:translateX(-50%); }
 #tutorial-overlay.dismissed { animation:tutorial-dismiss 450ms ease forwards; pointer-events:none; }
 @keyframes tutorial-dismiss { to { opacity:0; visibility:hidden; } }
 #info-popup, #tape-popup { position:fixed; inset:0; z-index:20; display:none; place-items:center; padding:24px; background:rgba(7,9,8,.54); backdrop-filter:blur(8px); }
@@ -67,4 +68,4 @@ header, aside, .controls, .hint, footer { display:none; }
 .video-frame iframe { display:block; width:100%; height:100%; border:0; }
 #model-viewer { position:absolute; inset:0; background:#151615; }
 #model-viewer canvas { display:block; width:100%; height:100%; }
-@media (max-width:760px) { body { overflow:auto; } .shell { min-height:100svh; height:auto; grid-template-rows:64px minmax(650px,calc(100svh - 122px)) 58px; } main { display:block; } aside { position:absolute; padding:34px 7vw; } .intro,.meta { display:none; } #viewport { inset:0; } .controls { top:auto; bottom:40px; right:7vw; width:145px; } .hint { bottom:17px; left:35%; } header, footer { padding:0 7vw; } }
+@media (max-width:760px) { body { overflow:auto; } .shell { min-height:100svh; height:auto; grid-template-rows:64px minmax(650px,calc(100svh - 122px)) 58px; } main { display:block; } aside { position:absolute; padding:34px 7vw; } .intro,.meta { display:none; } #viewport { inset:0; } .controls { top:auto; bottom:40px; right:7vw; width:145px; } .hint { bottom:17px; left:35%; } header, footer { padding:0 7vw; } .tutorial-card { top:4vh; padding:26px 24px 24px; } .tutorial-card p:not(.eyebrow) { font-size:12px; } .tutorial-step { font-size:11px; padding:9px 11px 9px 9px; } .tutorial-step strong { flex-basis:28px; width:28px; height:28px; font-size:13px; } .tutorial-tapes { left:4vw; bottom:18vh; } .tutorial-screen { right:4vw; top:29vh; } .tutorial-camera { bottom:7vh; } }

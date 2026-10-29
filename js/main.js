@@ -10,6 +10,10 @@ document.querySelector('#tutorial-close').onclick = dismissTutorial;
 document.querySelector('#tutorial-dismiss').onclick = dismissTutorial;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x151615);
+const spaceTexture = new THREE.TextureLoader().load('images/outer-space-background.png', texture => {
+  texture.colorSpace = THREE.SRGBColorSpace;
+  scene.background = texture;
+});
 const camera = new THREE.PerspectiveCamera(32, 1, .1, 100);
 camera.position.set(0, 5.4, -18);
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -42,9 +46,11 @@ controls.addEventListener('change', () => {
   controls.target.z = THREE.MathUtils.clamp(controls.target.z, panBounds.minZ, panBounds.maxZ);
   camera.position.add(controls.target).sub(before);
 });
-scene.add(new THREE.HemisphereLight(0xcfd7d8, 0x171818, 1.8));
+scene.add(new THREE.HemisphereLight(0xcfd7d8, 0x171818, 2.1));
 const key = new THREE.DirectionalLight(0xffe2c8, 4.1);
 key.position.set(-5, 9, 7); key.castShadow = true; key.shadow.mapSize.set(2048, 2048); scene.add(key);
+const tableFill = new THREE.DirectionalLight(0xb9d7e1, 1.25);
+tableFill.position.set(0, 7, -8); scene.add(tableFill);
 const rim = new THREE.PointLight(0xf16f51, 12, 13); rim.position.set(5, 4, 0); scene.add(rim);
 
 const mat = (color, rough = .55, metal = 0) => new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal });
@@ -55,6 +61,34 @@ const box = (size, material, pos, bevel = .12, parent = tv) => {
   const mesh = new THREE.Mesh(new RoundedBoxGeometry(...size, 5, Math.max(.01, radius)), material);
   mesh.position.set(...pos); mesh.castShadow = true; mesh.receiveShadow = true; parent.add(mesh); return mesh;
 };
+// A simple room keeps the space view contained to a large window behind the set.
+const room = new THREE.Group(); scene.add(room);
+const roomWallMat = mat(0x252a27, .9);
+const roomTrimMat = mat(0x111513, .58);
+const roomPart = (size, material, pos, bevel = .04) => box(size, material, pos, bevel, room);
+// The room is intentionally oversized so the camera can pan without feeling boxed in.
+const roomBackZ = 16;
+const roomWallHeight = 20;
+const windowWidth = 19;
+const windowBottom = -2.25;
+const windowTop = 8.45;
+const windowHeight = windowTop - windowBottom;
+roomPart([(40 - windowWidth) / 2, roomWallHeight, .3], roomWallMat, [-((40 + windowWidth) / 4), 4.3, roomBackZ], .08);
+roomPart([(40 - windowWidth) / 2, roomWallHeight, .3], roomWallMat, [((40 + windowWidth) / 4), 4.3, roomBackZ], .08);
+roomPart([windowWidth, 20 - windowTop, .3], roomWallMat, [0, (windowTop + 14.3) / 2, roomBackZ], .08);
+roomPart([windowWidth, windowBottom + 5.72, .3], roomWallMat, [0, (windowBottom - 5.72) / 2, roomBackZ], .08);
+roomPart([.3, roomWallHeight, 30], roomWallMat, [-20, 4.3, 1], .08);
+roomPart([.3, roomWallHeight, 30], roomWallMat, [20, 4.3, 1], .08);
+roomPart([40, .3, 30], roomWallMat, [0, 14.3, 1], .08);
+
+// No pane is placed in the opening: the scene background is visible through the frame.
+const windowFrameZ = roomBackZ - .33;
+roomPart([19.7, .28, .28], roomTrimMat, [0, windowTop, windowFrameZ], .04);
+roomPart([19.7, .28, .28], roomTrimMat, [0, windowBottom, windowFrameZ], .04);
+roomPart([.28, windowHeight + .28, .28], roomTrimMat, [-9.85, (windowTop + windowBottom) / 2, windowFrameZ], .04);
+roomPart([.28, windowHeight + .28, .28], roomTrimMat, [9.85, (windowTop + windowBottom) / 2, windowFrameZ], .04);
+roomPart([.2, windowHeight, .2], roomTrimMat, [0, (windowTop + windowBottom) / 2, windowFrameZ - .04], .03);
+roomPart([19.4, .2, .2], roomTrimMat, [0, (windowTop + windowBottom) / 2, windowFrameZ - .04], .03);
 box([6.8, 4.25, 3.15], bodyMat, [0, 2.78, 0], .32);
 box([5.32, 3.35, .22], darkMat, [-.62, 3.06, -1.64], .22);
 const screenMaterial = mat(0x172522, .3); screenMaterial.emissive = new THREE.Color(0x4cae9d);
@@ -118,8 +152,8 @@ oldConsoleBox([1.56, .1, 1.32], consoleDark, [0, .23, 0], .04);
 const table = new THREE.Group(); scene.add(table); const tableTop = new THREE.Mesh(new THREE.BoxGeometry(16, .45, 8), mat(0x785041, .5)); tableTop.position.y = -.32; tableTop.castShadow = true; tableTop.receiveShadow = true; table.add(tableTop);
 const legMat = mat(0x35251f, .62);
 [[-6.8, -3, -3], [6.8, -3, -3], [-6.8, -3, 3], [6.8, -3, 3]].forEach(pos => { const leg = new THREE.Mesh(new THREE.BoxGeometry(.42, 5.4, .42), legMat); leg.position.set(...pos); leg.castShadow = true; table.add(leg); });
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), mat(0x101110, .82)); floor.rotation.x = -Math.PI / 2; floor.position.y = -5.72; scene.add(floor);
-const grid = new THREE.GridHelper(80, 40, 0x353531, 0x242522); grid.position.y = -5.69; grid.material.opacity = .24; grid.material.transparent = true; scene.add(grid);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(39.7, 29.7), mat(0x101110, .82)); floor.rotation.x = -Math.PI / 2; floor.position.set(0, -5.72, 1); scene.add(floor);
+const grid = new THREE.GridHelper(40, 40, 0x353531, 0x242522); grid.position.set(0, -5.69, 1); grid.scale.z = .75; grid.material.opacity = .24; grid.material.transparent = true; scene.add(grid);
 
 const resize = () => { const r = host.getBoundingClientRect(); camera.aspect = r.width / r.height; camera.updateProjectionMatrix(); renderer.setSize(r.width, r.height, true); }; addEventListener('resize', resize); resize();
 const popup = document.querySelector('#info-popup'), tapePopup = document.querySelector('#tape-popup');
